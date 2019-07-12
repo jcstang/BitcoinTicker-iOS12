@@ -7,8 +7,12 @@
 //
 
 import UIKit
+import Alamofire
+import SwiftyJSON
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
+    
+    
     
     let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
     let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
@@ -22,63 +26,80 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        currencyPicker.delegate = self
+        currencyPicker.dataSource = self
        
     }
-
     
     //TODO: Place your 3 UIPickerView delegate methods here
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
     
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return currencyArray.count
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        return currencyArray[row]
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        //print(row)
+        finalURL = baseURL + currencyArray[row]
+        print(finalURL)
+        getBitcoinData(url: finalURL)
+    }
     
     
 
     
+    //MARK: - Networking
+    /***************************************************************/
+    func getBitcoinData(url: String) {
+        Alamofire.request(url, method: .get).responseJSON { response in
+            if response.result.isSuccess {
+                print("Success! Got something... like a fish?")
+                let bitcoinData: JSON = JSON(response.result.value)
+                //print(bitcoinData)
+                self.updateBitcoinData(json: bitcoinData)
+                
+            } else {
+                print("Error: \(response.result.error)")
+                self.bitcoinPriceLabel.text = "Oops"
+                
+            }
+            
+        }
+    }
     
     
-//    
-//    //MARK: - Networking
-//    /***************************************************************/
-//    
-//    func getWeatherData(url: String, parameters: [String : String]) {
-//        
-//        Alamofire.request(url, method: .get, parameters: parameters)
-//            .responseJSON { response in
-//                if response.result.isSuccess {
-//
-//                    print("Sucess! Got the weather data")
-//                    let weatherJSON : JSON = JSON(response.result.value!)
-//
-//                    self.updateWeatherData(json: weatherJSON)
-//
-//                } else {
-//                    print("Error: \(String(describing: response.result.error))")
-//                    self.bitcoinPriceLabel.text = "Connection Issues"
-//                }
-//            }
-//
-//    }
-//
-//    
-//    
-//    
-//    
-//    //MARK: - JSON Parsing
-//    /***************************************************************/
-//    
-//    func updateWeatherData(json : JSON) {
-//        
-//        if let tempResult = json["main"]["temp"].double {
-//        
-//        weatherData.temperature = Int(round(tempResult!) - 273.15)
-//        weatherData.city = json["name"].stringValue
-//        weatherData.condition = json["weather"][0]["id"].intValue
-//        weatherData.weatherIconName =    weatherData.updateWeatherIcon(condition: weatherData.condition)
-//        }
-//        
-//        updateUIWithWeatherData()
-//    }
-//    
-
-
+    //MARK: - JSON Parsing
+    /***************************************************************/
+    func updateBitcoinData(json: JSON) {
+        
+        if let bitcoinPrice = json["ask"].double {
+            //let largeNumber = 31908551587
+            //let numberFormatter = NumberFormatter()
+            //numberFormatter.numberStyle = .decimal
+            //let formattedNumber = numberFormatter.string(from: NSNumber(value:largeNumber))
+            
+            let doubleNumEditor = NumberFormatter()
+            doubleNumEditor.numberStyle = .decimal
+            let commaDoubleValue = doubleNumEditor.string(from: NSNumber(value: bitcoinPrice))
+            
+            print(bitcoinPrice)
+            //bitcoinPriceLabel.text = String(bitcoinPrice)
+            bitcoinPriceLabel.text = commaDoubleValue
+            
+        } else {
+            bitcoinPriceLabel.text = "Price Unavailable"
+        }
+        
+        
+    }
+    
 
 
 }
