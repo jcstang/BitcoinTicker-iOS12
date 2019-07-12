@@ -12,11 +12,12 @@ import SwiftyJSON
 
 class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDelegate {
     
-    
-    
+
     let baseURL = "https://apiv2.bitcoinaverage.com/indices/global/ticker/BTC"
     let currencyArray = ["AUD", "BRL","CAD","CNY","EUR","GBP","HKD","IDR","ILS","INR","JPY","MXN","NOK","NZD","PLN","RON","RUB","SEK","SGD","USD","ZAR"]
+    let currencySymbol = ["$", "R$", "$", "¥", "€", "£", "$", "Rp", "₪", "₹", "¥", "$", "kr", "$", "zł", "lei", "₽", "kr", "$", "$", "R"]
     var finalURL = ""
+    var displaySymbol = ""
 
     //Pre-setup IBOutlets
     @IBOutlet weak var bitcoinPriceLabel: UILabel!
@@ -32,7 +33,10 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
        
     }
     
-    //TODO: Place your 3 UIPickerView delegate methods here
+
+    //MARK:  - UIPickerView delegate methods
+    /**************************************************************/
+    
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
     }
@@ -48,12 +52,12 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         //print(row)
         finalURL = baseURL + currencyArray[row]
+        displaySymbol = currencySymbol[row]
         print(finalURL)
         getBitcoinData(url: finalURL)
     }
     
     
-
     
     //MARK: - Networking
     /***************************************************************/
@@ -75,23 +79,18 @@ class ViewController: UIViewController, UIPickerViewDataSource, UIPickerViewDele
     }
     
     
+    
     //MARK: - JSON Parsing
     /***************************************************************/
     func updateBitcoinData(json: JSON) {
         
         if let bitcoinPrice = json["ask"].double {
-            //let largeNumber = 31908551587
-            //let numberFormatter = NumberFormatter()
-            //numberFormatter.numberStyle = .decimal
-            //let formattedNumber = numberFormatter.string(from: NSNumber(value:largeNumber))
             
             let doubleNumEditor = NumberFormatter()
             doubleNumEditor.numberStyle = .decimal
             let commaDoubleValue = doubleNumEditor.string(from: NSNumber(value: bitcoinPrice))
             
-            print(bitcoinPrice)
-            //bitcoinPriceLabel.text = String(bitcoinPrice)
-            bitcoinPriceLabel.text = commaDoubleValue
+            bitcoinPriceLabel.text = "\(displaySymbol) \(commaDoubleValue!)"
             
         } else {
             bitcoinPriceLabel.text = "Price Unavailable"
